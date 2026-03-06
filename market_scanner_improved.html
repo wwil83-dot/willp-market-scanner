@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WillP ProLine Market Scanner</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%); color: #ffffff; padding: 20px; min-height: 100vh; }
+        .header { text-align: center; margin-bottom: 30px; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 15px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; background: linear-gradient(45deg, #FFD700, #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .live-indicator { display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px; background: rgba(0, 230, 118, 0.2); border-radius: 20px; margin-top: 10px; }
+        .live-dot { width: 10px; height: 10px; background: #00E676; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .controls { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .filter-btn { padding: 12px 24px; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; cursor: pointer; font-size: 1em; transition: all 0.3s ease; }
+        .filter-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
+        .filter-btn.active { background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; font-weight: bold; }
+        .refresh-btn { background: linear-gradient(45deg, #00E676, #00C853); color: #000; font-weight: bold; }
+        .scanner-container { max-width: 1400px; margin: 0 auto; }
+        .section { margin-bottom: 30px; background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 20px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid rgba(255, 255, 255, 0.1); }
+        .section-title { font-size: 1.8em; font-weight: bold; }
+        .section-count { background: rgba(255, 215, 0, 0.2); padding: 8px 16px; border-radius: 20px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; background: rgba(0, 0, 0, 0.3); border-radius: 10px; overflow: hidden; }
+        thead { background: rgba(255, 215, 0, 0.1); }
+        th { padding: 8px 10px; text-align: left; font-weight: bold; text-transform: uppercase; font-size: 0.75em; color: #FFD700; }
+        td { padding: 6px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.85em; }
+        tr:hover { background: rgba(255, 255, 255, 0.05); cursor: pointer; }
+        .symbol { font-weight: bold; font-size: 1.1em; }
+        .exchange-badge { display: inline-block; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: bold; }
+        .binance { background: #F3BA2F; color: #000; }
+        .nasdaqnyse { background: #0099CC; color: #fff; }
+        .nyse { background: #0A58A8; color: #fff; }
+        .comex { background: #FFD700; color: #000; }
+        .forex { background: #006633; color: #fff; }
+        .signal { padding: 8px 16px; border-radius: 8px; font-weight: bold; text-align: center; }
+        .signal.check_buy { background: linear-gradient(135deg, #2196F3, #1976D2); color: #fff; }
+        .signal.check_sell { background: linear-gradient(135deg, #FF9800, #F57C00); color: #fff; }
+        .signal.neutral { background: linear-gradient(135deg, #9E9E9E, #757575); color: #fff; }
+        .price { font-family: 'Courier New', monospace; font-size: 1.05em; }
+        .change-positive { color: #00E676; }
+        .change-negative { color: #FF5252; }
+        
+        /* FEAR & GREED DIAL */
+        .sentiment-gauge { position: relative; width: 50px; height: 50px; display: inline-block; }
+        .gauge-bg { width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(
+            from 180deg,
+            #FF5252 0deg,
+            #FFA726 72deg,
+            #FFD700 144deg,
+            #8BC34A 216deg,
+            #00E676 288deg
+        ); position: relative; }
+        .gauge-inner { position: absolute; top: 6px; left: 6px; width: 38px; height: 38px; border-radius: 50%; background: #1e1e2e; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.7em; }
+        .gauge-needle { position: absolute; bottom: 50%; left: 50%; width: 1px; height: 22px; background: white; transform-origin: bottom center; transition: transform 0.5s ease; }
+        
+        .loading { text-align: center; padding: 60px; font-size: 1.5em; color: #FFD700; }
+        .last-update { text-align: center; padding: 10px; color: #aaa; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 WillP ProLine Market Scanner</h1>
+        <p>ACL-Based Weekly Trend Analysis</p>
+        <div class="live-indicator"><div class="live-dot"></div><span>LIVE DATA</span></div>
+    </div>
+
+    <div class="controls">
+        <button class="filter-btn active" onclick="filterMarket('all')">All Markets</button>
+        <button class="filter-btn" onclick="filterMarket('crypto')">🪙 Crypto</button>
+        <button class="filter-btn" onclick="filterMarket('stocks')">📈 Stocks</button>
+        <button class="filter-btn" onclick="filterMarket('midcap')">📊 Mid Caps</button>
+        <button class="filter-btn" onclick="filterMarket('forex')">💱 Forex</button>
+        <button class="filter-btn" onclick="filterSignal('buy')">🟢 Buy Signals</button>
+        <button class="refresh-btn" onclick="fetchData()">🔄 Refresh Now</button>
+    </div>
+
+    <div class="scanner-container" id="scanner"><div class="loading">Loading...</div></div>
+    <div class="last-update" id="lastUpdate"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        let marketData = {};
+        let currentFilter = 'all';
+        let signalFilter = null;
+
+        async function fetchData() {
+            try {
+                document.getElementById('scanner').innerHTML = '<div class="loading">Fetching...</div>';
+                const response = await fetch(`${API_BASE}/api/markets`);
+                if (!response.ok) throw new Error('Failed');
+                marketData = await response.json();
+                
+                const updateTime = new Date(marketData.timestamp).toLocaleTimeString();
+                const cryptoCount = (marketData.crypto || []).length;
+                const status = cryptoCount >= 40 ? '🟢 Live' : cryptoCount >= 5 ? '🟡 Cached' : '🔴 Fallback';
+                
+                document.getElementById('lastUpdate').textContent = `${status} | Updated: ${updateTime} | ${cryptoCount} crypto`;
+                renderMarkets();
+            } catch (error) {
+                console.error(error);
+                document.getElementById('scanner').innerHTML = '<div class="loading" style="color: #FF5252;">⚠️ Backend Error - Retrying in 10s...</div>';
+                setTimeout(fetchData, 10000); // Auto-retry in 10 seconds
+            }
+        }
+
+        function renderMarkets() {
+            const container = document.getElementById('scanner');
+            container.innerHTML = '';
+            const marketsToShow = currentFilter === 'all' ? ['crypto', 'stocks', 'midcap', 'forex'] : [currentFilter];
+
+            marketsToShow.forEach(category => {
+                const data = marketData[category];
+                if (!data || data.length === 0) return;
+                const filteredData = signalFilter ? data.filter(item => item.signal === signalFilter) : data;
+                if (filteredData.length === 0) return;
+
+                const section = document.createElement('div');
+                section.className = 'section';
+                section.innerHTML = `
+                    <div class="section-header">
+                        <div class="section-title">${getCategoryTitle(category)}</div>
+                        <div class="section-count">${filteredData.length} Assets</div>
+                    </div>
+                    <table>
+                        <thead><tr>
+                            <th>Symbol</th><th>Name</th><th>Exchange</th><th>Price</th>
+                            <th>24h</th><th>Signal</th><th>ACL Regime</th><th>F&G</th>
+                        </tr></thead>
+                        <tbody>${filteredData.map(item => createRow(item)).join('')}</tbody>
+                    </table>`;
+                container.appendChild(section);
+            });
+        }
+
+        function createRow(item) {
+            const changeClass = item.change >= 0 ? 'change-positive' : 'change-negative';
+            
+            // ACL Regime badge
+            let regimeBadge = '';
+            if (item.aclRegime === 'bull') {
+                regimeBadge = '<span style="color: #00E676; font-weight: bold;">🟢 BULLISH</span>';
+            } else if (item.aclRegime === 'bear') {
+                regimeBadge = '<span style="color: #FF5252; font-weight: bold;">🔴 BEARISH</span>';
+            } else {
+                regimeBadge = '<span style="color: #9E9E9E;">⚪ NEUTRAL</span>';
+            }
+            
+            // Signal text
+            let signalText = '';
+            if (item.signal === 'check_buy') {
+                signalText = 'CHECK CHART FOR BUY';
+            } else if (item.signal === 'check_sell') {
+                signalText = 'CHECK CHART FOR SELL';
+            } else {
+                signalText = 'NEUTRAL';
+            }
+            
+            // Simple F&G indicator
+            let fgText = item.sentiment === 'greed' ? '😤 Greed' : 
+                        item.sentiment === 'fear' ? '😱 Fear' : '😐 Neutral';
+            let fgColor = item.sentiment === 'greed' ? '#00E676' : 
+                         item.sentiment === 'fear' ? '#FF5252' : '#9E9E9E';
+            
+            return `<tr onclick="openChart('${item.tvSymbol || item.symbol}', '${item.category}')">
+                <td class="symbol">${item.symbol}</td>
+                <td>${item.name}</td>
+                <td><span class="exchange-badge ${item.exchange.toLowerCase().replace(/\//g,'').replace(/\s/g,'')}">${item.exchange}</span></td>
+                <td class="price">$${formatPrice(item.price)}</td>
+                <td class="${changeClass}">${item.change >= 0 ? '+' : ''}${item.change.toFixed(2)}%</td>
+                <td><div class="signal ${item.signal}">${signalText}</div></td>
+                <td>${regimeBadge}</td>
+                <td style="color: ${fgColor}; font-weight: bold;">${fgText} (${item.sentimentScore})</td>
+            </tr>`;
+        }
+
+        function createSentimentGauge(score, sentiment) {
+            // Needle rotation: 0-100 maps to -90deg (fear) to +90deg (greed)
+            const rotation = (score - 50) * 1.8;
+            return `
+                <div class="sentiment-gauge">
+                    <div class="gauge-bg">
+                        <div class="gauge-inner">${score}</div>
+                        <div class="gauge-needle" style="transform: rotate(${rotation}deg);"></div>
+                    </div>
+                </div>`;
+        }
+
+        function formatPrice(price) {
+            if (price < 1) return price.toFixed(4);
+            if (price < 100) return price.toFixed(2);
+            return price.toFixed(2);
+        }
+
+        function getCategoryTitle(category) {
+            const titles = {
+                crypto: '🪙 Cryptocurrency (Top 50)',
+                stocks: '📈 Large Cap Stocks (Top 20)',
+                midcap: '📊 Mid Caps & Commodities',
+                forex: '💱 Foreign Exchange'
+            };
+            return titles[category] || category;
+        }
+
+        function filterMarket(market) {
+            currentFilter = market;
+            signalFilter = null;
+            document.querySelectorAll('.filter-btn:not(.refresh-btn)').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderMarkets();
+        }
+
+        function filterSignal(signal) {
+            signalFilter = signalFilter === signal ? null : signal;
+            renderMarkets();
+        }
+
+        function openChart(symbol, category) {
+            let url;
+            if (category === 'crypto') {
+                // Weekly crypto chart on TradingView
+                url = `https://www.tradingview.com/chart/?symbol=${symbol}&interval=W`;
+            } else {
+                // Weekly chart for everything else
+                url = `https://www.tradingview.com/chart/?symbol=${symbol}&interval=W`;
+            }
+            window.open(url, '_blank');
+        }
+
+        fetchData();
+        setInterval(fetchData, 180000); // Refresh every 3 minutes (180000ms)
+    </script>
+</body>
+</html>
