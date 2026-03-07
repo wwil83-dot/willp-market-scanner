@@ -206,7 +206,7 @@ def fetch_all_assets():
     
     all_assets = []
     
-    # CRYPTO (Top 20)
+    # CRYPTO (Top 10 instead of 20 for cloud performance)
     print("\n📊 Processing Crypto...")
     crypto_list = [
         ('BTC', 'Bitcoin'),
@@ -215,20 +215,10 @@ def fetch_all_assets():
         ('SOL', 'Solana'),
         ('XRP', 'Ripple'),
         ('ADA', 'Cardano'),
-        ('AVAX', 'Avalanche'),
         ('DOGE', 'Dogecoin'),
-        ('DOT', 'Polkadot'),
         ('MATIC', 'Polygon'),
-        ('SHIB', 'Shiba Inu'),
-        ('TRX', 'Tron'),
         ('LINK', 'Chainlink'),
-        ('UNI', 'Uniswap'),
-        ('ATOM', 'Cosmos'),
-        ('LTC', 'Litecoin'),
-        ('ETC', 'Ethereum Classic'),
-        ('XLM', 'Stellar'),
-        ('XMR', 'Monero'),
-        ('BCH', 'Bitcoin Cash')
+        ('LTC', 'Litecoin')
     ]
     
     for symbol, name in crypto_list:
@@ -237,7 +227,7 @@ def fetch_all_assets():
             all_assets.append(result)
             print(f"✓ {symbol}: {result['aclRegime'].upper()} - {result['signal']}")
     
-    # STOCKS (Top 20)
+    # STOCKS (Top 10 instead of 20)
     print("\n📊 Processing Stocks...")
     stock_list = [
         ('AAPL', 'Apple Inc.'),
@@ -249,17 +239,7 @@ def fetch_all_assets():
         ('META', 'Meta Platforms'),
         ('JPM', 'JPMorgan Chase'),
         ('V', 'Visa'),
-        ('MA', 'Mastercard'),
-        ('JNJ', 'Johnson & Johnson'),
-        ('WMT', 'Walmart'),
-        ('PG', 'Procter & Gamble'),
-        ('HD', 'Home Depot'),
-        ('DIS', 'Disney'),
-        ('NFLX', 'Netflix'),
-        ('INTC', 'Intel'),
-        ('AMD', 'AMD'),
-        ('BAC', 'Bank of America'),
-        ('BRK-B', 'Berkshire Hathaway')
+        ('WMT', 'Walmart')
     ]
     
     for symbol, name in stock_list:
@@ -280,18 +260,14 @@ def fetch_all_assets():
         all_assets.append(result)
         print(f"✓ SILVER: {result['aclRegime'].upper()} - ${result['price']:.2f}")
     
-    # MID-CAPS
+    # MID-CAPS (Reduced to 5 for cloud)
     print("\n📊 Processing Mid-Caps...")
     midcap_list = [
         ('UEC', 'Uranium Energy'),
         ('XOM', 'Exxon Mobil'),
-        ('CVX', 'Chevron'),
-        ('NEM', 'Newmont Mining'),
-        ('SQ', 'Block Inc.'),
         ('COIN', 'Coinbase'),
         ('PLTR', 'Palantir'),
-        ('ROKU', 'Roku'),
-        ('SNAP', 'Snap Inc.')
+        ('SQ', 'Block Inc.')
     ]
     
     for symbol, name in midcap_list:
@@ -301,13 +277,11 @@ def fetch_all_assets():
             all_assets.append(result)
             print(f"✓ {symbol}: {result['aclRegime'].upper()} - {result['signal']}")
     
-    # FOREX
+    # FOREX (Reduced to 2 for cloud)
     print("\n📊 Processing Forex...")
     forex_list = [
         ('EURUSD', 'Euro/US Dollar'),
-        ('GBPUSD', 'British Pound/US Dollar'),
-        ('USDJPY', 'US Dollar/Japanese Yen'),
-        ('AUDUSD', 'Australian Dollar/US Dollar')
+        ('GBPUSD', 'British Pound/US Dollar')
     ]
     
     for symbol, name in forex_list:
